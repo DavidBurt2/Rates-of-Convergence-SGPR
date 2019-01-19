@@ -1,7 +1,7 @@
 import numpy as np
 import gpflow
 import scipy
-jitter = 8e-15
+jitter = 1e-12
 no_jitter = gpflow.settings.get_settings()
 no_jitter.numerics.jitter_level = 0
 
