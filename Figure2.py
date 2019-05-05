@@ -1,18 +1,22 @@
-import determinental_sample_GP
-import gpflow
 import matplotlib.pyplot as plt
 import numpy as np
+import gpflow
+import determinental_sample_GP
 
+# X \sim N(0, I)
 X = np.random.randn(5000, 2)
 kern = gpflow.kernels.RBF(2)
-kern.lengthscales = 3
+kern.lengthscales = 2
+
 kern2 = gpflow.kernels.RBF(2)
 kern2.lengthscales = .5
-M = 50
 
+M = 50
+# Sample points from K-dpp determined by first kernel
 samp1, _ = determinental_sample_GP.det_sample_GP(X, kern, M)
 samp2, _ = determinental_sample_GP.det_sample_GP(X, kern, M)
 samp3, _ = determinental_sample_GP.det_sample_GP(X, kern, M)
+# Sample points from K-dpp determined by second kernel
 samples1, _ = determinental_sample_GP.det_sample_GP(X, kern2, M)
 samples2, _ = determinental_sample_GP.det_sample_GP(X, kern2, M)
 samples3, _ = determinental_sample_GP.det_sample_GP(X, kern2, M)

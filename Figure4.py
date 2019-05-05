@@ -78,7 +78,7 @@ for i in range(num_trials):
 #Make plot
 matplotlib.rcParams.update({'font.size': 22})
 plt.rc('text', usetex=True)
-plt.figure()
+plt.figure(figsize=(10, 5))
 ax1 = plt.subplot(2, 1, 1)
 ax1.plot(N_sequence, all_gaps.mean(0))
 ax1.plot(N_sequence, all_t_gaps.mean(0))

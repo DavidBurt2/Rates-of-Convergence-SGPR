@@ -39,7 +39,6 @@ def KL_bound2(k_var, k_ls, sigma_n, N, p_sd, p_success, M):
     :param M: number of inducing points
     :return: Bound from theorem 4
     """
-    # calculations
     a = 1. / (4 * np.square(p_sd))
     b = 1. / (2 * np.square(k_ls))
     c = np.sqrt(np.square(a) + 2 * a * b)

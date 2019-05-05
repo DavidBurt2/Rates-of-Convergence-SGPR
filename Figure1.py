@@ -30,11 +30,12 @@ for i in range(num_trials):
         X_cur = X[:N, :]
         Z_cur, ind = sample_points(X_cur, k, M)
         Y_cur = Y[:N, :]
-        # If jitter isn't very low, difficult for t->0 (we basically add M*jitter to t) M*jitter *\|y\|^2 may be large
+        # Jittering much increases t significantly
         with gpflow.settings.temp_settings(low_jitter):
             Kuu = k.compute_K_symm(Z_cur)
             Kuf = k.compute_K(Z_cur, X_cur)
             L = np.linalg.cholesky(Kuu + jitter * np.eye(len(Z_cur)))
+            # matrix square root of Qff
             LinvKuf = scipy.linalg.solve_triangular(L, Kuf, lower=True)
             # t= tr(Kff-Qff)
             t = N * k.variance.value - np.sum(np.square(LinvKuf))
@@ -57,7 +58,7 @@ for i in range(num_trials):
 # Make plot
 matplotlib.rcParams.update({'font.size': 22})
 plt.rc('text', usetex=True)
-plt.figure()
+plt.figure(figsize=(10, 5))
 plt.plot(N_sequence, np.mean(all_gaps, axis=0))
 plt.plot(N_sequence, np.mean(all_ts, axis=0))
 plt.xlabel("Number of Data Points")
