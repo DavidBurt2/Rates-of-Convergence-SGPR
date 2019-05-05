@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 from determinental_sample_GP import det_sample_GP as sample_points
-from plot_M import KL_bound2
+from KL_Bounds import KL_bound2
 
 # set seed for reproducibility
 np.random.seed(5)
@@ -39,7 +39,7 @@ for i in range(num_trials):
     t_gap = []
     avgs = []
     # Generate a dataset of size Max N, Y is sampled from the prior
-    X = np.random.randn(1, N_sequence[-1])[:, None]
+    X = np.random.randn(N_sequence[-1],1)
     Kff = k.compute_K_symm(X)
     Y = np.random.multivariate_normal(mean=np.zeros(N_sequence[-1]), cov=Kff + sn * np.eye(N_sequence[-1]))[:, None]
 
@@ -86,6 +86,7 @@ ax1.plot(N_sequence, avg_kls.mean(0))
 ax1.set_ylim([0, 50])
 ax1.set_ylabel("KL Divergence")
 ax1.legend(["Actual KL Divergence", "$\mathcal{L}_{upper}-\mathcal{L}_{lower}$", "Theorem 4, p=.5"])
+
 ax2 = plt.subplot(2, 1, 2,sharex = ax1)
 ax2.plot(N_sequence, M_sequence)
 ax2.set_xlabel("Number of Data Points")

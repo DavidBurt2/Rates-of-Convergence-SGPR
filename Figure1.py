@@ -30,8 +30,8 @@ for i in range(num_trials):
         X_cur = X[:N, :]
         Z_cur, ind = sample_points(X_cur, k, M)
         Y_cur = Y[:N, :]
+        # If jitter isn't very low, difficult for t->0 (we basically add M*jitter to t) M*jitter *\|y\|^2 may be large
         with gpflow.settings.temp_settings(low_jitter):
-
             Kuu = k.compute_K_symm(Z_cur)
             Kuf = k.compute_K(Z_cur, X_cur)
             L = np.linalg.cholesky(Kuu + jitter * np.eye(len(Z_cur)))
@@ -50,23 +50,20 @@ for i in range(num_trials):
             m.kern.lengthscales = lengthscale
             elbo = m.compute_log_likelihood()
             gap = ml - elbo
-
         gaps.append(gap)
     all_gaps[i, :] = gaps
     all_ts[i, :] = ts
 
-
+# Make plot
 matplotlib.rcParams.update({'font.size': 22})
 plt.rc('text', usetex=True)
 plt.figure()
-
 plt.plot(N_sequence, np.mean(all_gaps, axis=0))
 plt.plot(N_sequence, np.mean(all_ts, axis=0))
 plt.xlabel("Number of Data Points")
 plt.ylabel("KL divergence")
 plt.legend(["Actual KL divergence", "$t/(2\sigma^2)$"])
 plt.tight_layout()
-plt.savefig("/scratch/drb62/fixed_m.eps")
 plt.show()
 
 
