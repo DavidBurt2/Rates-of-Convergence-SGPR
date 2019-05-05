@@ -1,32 +1,15 @@
-# define model,input distribution,amount of data, bound on norm of y, and M, this returns the corresponding bound on the KL-divergence that holds with probability
-# success
 import gpflow
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from determinental_sample_GP import det_sample_GP as sample
+from KL_Bounds import KL_bound, KL_bound2
 
 matplotlib.rcParams.update({'font.size': 30})
 
 jitter = 1e-10
 low_jitter = gpflow.settings.get_settings()
 low_jitter.numerics.jitter_level = jitter
-
-
-# TODO: Import KL_Bounds from other file, redo this plot with less noise maybe.
-def KL_bound(k_var, k_ls, sigma_n, N, p_sd, p_success, bound_y, M):
-    # calculations
-    a = 1. / (4 * np.square(p_sd))
-    b = 1. / (2 * np.square(k_ls))
-    c = np.sqrt(np.square(a) + 2 * a * b)
-    A = a + b + c
-    B = b / A
-    delta = 1 - p_success
-    first_term = (M + 1) * np.power(B, M) * N * k_var * np.sqrt(2 * a) / (
-            2 * np.sqrt(A) * np.square(sigma_n) * delta * (1 - B))
-    second_term = 1 + bound_y / np.square(sigma_n)
-    return first_term * second_term
-
 
 np.random.seed(1)
 lengthscale = .3
@@ -77,9 +60,8 @@ for m in ms:
             KL_bound(k_var=1, k_ls=lengthscale, sigma_n=sn, N=1000, p_sd=1, p_success=.99, bound_y=2 * N, M=m))
         titsias.append(Det_Init_M.compute_upper_bound() - elbo)
         # bounds from theorem 4
-        avg_50.append(2 * KL_bound(k_var=1, k_ls=lengthscale, sigma_n=sn, N=1000, p_sd=1, p_success=.5, bound_y=0, M=m))
-        avg_99.append(
-            2 * KL_bound(k_var=1, k_ls=lengthscale, sigma_n=sn, N=1000, p_sd=1, p_success=.99, bound_y=0, M=m))
+        avg_50.append(KL_bound2(k_var=1, k_ls=lengthscale, sigma_n=sn, N=1000, p_sd=1, p_success=.5, M=m))
+        avg_99.append(KL_bound2(k_var=1, k_ls=lengthscale, sigma_n=sn, N=1000, p_sd=1, p_success=.99, M=m))
 
 # plotting
 plt.rc('font', size=18)
