@@ -16,7 +16,7 @@ lengthscale = .3
 
 # this is high for illustrative purposes, with low variance can't get enough numerical precision
 # for L_upper-L_lower to go to zero and still compute Cholesky, in general this bound is very
-# sensitive to jitter. T should be monotonically decreasing, but we basically add, hitter*M to it
+# sensitive to jitter. T should be monotonically decreasing in M, but isn't if we jitter much.
 sn = 1.
 k = gpflow.kernels.RBF(1)
 k.lengthscales = lengthscale
