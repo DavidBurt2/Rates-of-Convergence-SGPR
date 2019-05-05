@@ -3,7 +3,7 @@ import scipy
 jitter = 1e-12
 
 
-# Note we do not implement the rank one updates needed to make this algorithm
+# We do not implement this algorithm the Naive way, without the rank one updates needed to make this algorithm O(NM^2)
 def det_sample_GP(X, kern, M):
     """
 
