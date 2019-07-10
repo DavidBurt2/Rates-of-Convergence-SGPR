@@ -2,7 +2,7 @@ import gpflow
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-from determinental_sample_GP import det_sample_GP as sample_points
+from dppy.finite_dpps import FiniteDPP
 import matplotlib
 
 np.random.seed(0)
@@ -10,7 +10,7 @@ jitter = 1e-10
 low_jitter = gpflow.settings.get_settings()
 low_jitter.numerics.jitter_level = jitter
 
-num_trials = 3
+num_trials = 7
 
 N_sequence = np.array([int(100 * 1.3 ** pow) for pow in range(15)])
 sn = .1
@@ -25,16 +25,20 @@ for i in range(num_trials):
     ts = []
     X = 5 * np.random.rand(N_sequence[-1])[:, None]
     Kff = k.compute_K_symm(X)
-    Y = np.random.multivariate_normal(mean=np.zeros(N_sequence[-1]), cov=Kff + sn * np.eye(N_sequence[-1]))[:, None]
+    Y = np.random.multivariate_normal(mean=np.zeros(N_sequence[-1]), cov=Kff + np.square(sn) * np.eye(N_sequence[-1]))[:, None]
     for N in N_sequence:
         X_cur = X[:N, :]
-        Z_cur, ind = sample_points(X_cur, k, M)
+        kff = k.compute_K_symm(X_cur)
+        DPP = FiniteDPP('likelihood', **{'L': kff})
+        DPP.flush_samples()
+        DPP.sample_exact_k_dpp(size=M)
+        ind = DPP.list_of_samples[0]
         Y_cur = Y[:N, :]
         # Jittering much increases t significantly
         with gpflow.settings.temp_settings(low_jitter):
-            Kuu = k.compute_K_symm(Z_cur)
-            Kuf = k.compute_K(Z_cur, X_cur)
-            L = np.linalg.cholesky(Kuu + jitter * np.eye(len(Z_cur)))
+            Kuu = k.compute_K_symm(X_cur[ind])
+            Kuf = k.compute_K(X_cur[ind], X_cur)
+            L = np.linalg.cholesky(Kuu + jitter * np.eye(M))
             # matrix square root of Qff
             LinvKuf = scipy.linalg.solve_triangular(L, Kuf, lower=True)
             # t= tr(Kff-Qff)
@@ -46,7 +50,7 @@ for i in range(num_trials):
             full_m.kern.lengthscales = lengthscale
             ml = full_m.compute_log_likelihood()
             # Fit sparse model and compute ELBO
-            m = gpflow.models.SGPR(X_cur, Y_cur, kern=k, Z=Z_cur)
+            m = gpflow.models.SGPR(X_cur, Y_cur, kern=k, Z=X_cur[ind])
             m.likelihood.variance = np.square(sn)
             m.kern.lengthscales = lengthscale
             elbo = m.compute_log_likelihood()
@@ -58,13 +62,13 @@ for i in range(num_trials):
 # Make plot
 matplotlib.rcParams.update({'font.size': 22})
 plt.rc('text', usetex=True)
-plt.figure(figsize=(10, 5))
+plt.figure(figsize=(12, 5))
 plt.plot(N_sequence, np.mean(all_gaps, axis=0))
 plt.plot(N_sequence, np.mean(all_ts, axis=0))
 plt.xlabel("Number of Data Points")
 plt.ylabel("KL divergence")
 plt.legend(["Actual KL divergence", "$t/(2\sigma^2)$"])
 plt.tight_layout()
-plt.show()
+plt.savefig("Figure1.pdf")
 
 

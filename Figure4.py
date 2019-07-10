@@ -2,11 +2,13 @@ import gpflow
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
-from determinental_sample_GP import det_sample_GP as sample_points
-from KL_Bounds import KL_bound2
+from dppy.finite_dpps import FiniteDPP
+
+#from determinental_sample_GP import det_sample_GP as sample_points
+from KL_Bounds import KL_bound,KL_bound2
 
 # set seed for reproducibility
-np.random.seed(5)
+np.random.seed(3)
 
 
 # We reduce the jitter, note that the jitter will at some point have a large impact on the magnitude of the trace term
@@ -41,11 +43,16 @@ for i in range(num_trials):
     # Generate a dataset of size Max N, Y is sampled from the prior
     X = np.random.randn(N_sequence[-1],1)
     Kff = k.compute_K_symm(X)
-    Y = np.random.multivariate_normal(mean=np.zeros(N_sequence[-1]), cov=Kff + sn * np.eye(N_sequence[-1]))[:, None]
+    Y = np.random.multivariate_normal(mean=np.zeros(N_sequence[-1]), cov=Kff + np.square(sn) * np.eye(N_sequence[-1]))[:, None]
 
     for N, M in zip(N_sequence, M_sequence):
         X_cur = X[:N, :]
-        Z_cur, _ = sample_points(X_cur, k, M)
+        kff= k.compute_K_symm(X_cur)
+        DPP = FiniteDPP('likelihood', **{'L': kff+np.eye(N)*1e-6})
+        DPP.flush_samples()
+        DPP.sample_exact_k_dpp(size=M)
+        ind = DPP.list_of_samples[0]
+        Z_cur = X_cur[ind]
         Y_cur = Y[:N, :]
         with gpflow.settings.temp_settings(low_jitter):
             # bound from theorem 4
@@ -83,9 +90,9 @@ ax1 = plt.subplot(2, 1, 1)
 ax1.plot(N_sequence, all_gaps.mean(0))
 ax1.plot(N_sequence, all_t_gaps.mean(0))
 ax1.plot(N_sequence, avg_kls.mean(0))
-ax1.set_ylim([0, 50])
+ax1.set_ylim([0, 40])
 ax1.set_ylabel("KL Divergence")
-ax1.legend(["Actual KL Divergence", "$\mathcal{L}_{upper}-\mathcal{L}_{lower}$", "Theorem 4, p=.5"])
+ax1.legend(["Actual KL Divergence", "$\mathcal{L}_{upper}-\mathcal{L}_{lower}$" ,"Theorem 4, p=.5"])
 
 ax2 = plt.subplot(2, 1, 2,sharex = ax1)
 ax2.plot(N_sequence, M_sequence)
@@ -93,5 +100,11 @@ ax2.set_xlabel("Number of Data Points")
 ax2.set_ylabel("M")
 ax2.set_xlim([0, 3900])
 plt.tight_layout()
-plt.show()
+plt.subplots_adjust(top=0.966,
+bottom=0.158,
+left=0.075,
+right=0.984,
+hspace=0.234,
+wspace=0.22)
+plt.savefig("Figure4.pdf")
 
